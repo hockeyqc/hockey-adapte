@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Formations obligatoires — Hockey Québec</title>
+  <meta name="description" content="Trouvez les formations obligatoires selon votre rôle (entraîneur·se, officiel·le, responsable d’équipe, intervenant·e) — Hockey Québec." />
+  <style>
+    :root {
+      --hq-blue: #79c6e6;
+      --text: #0f172a;
+      --muted: #475569;
+      --bg: #ffffff;
+      --border: #e2e8f0;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Circular Std", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 24px 16px 40px;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      background: #fff;
+    }
+    label { font-weight: 600; display: block; margin-bottom: 8px; }
+    select, button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 16px;
+    }
+    select { width: 100%; background: #fff; }
+    button {
+      margin-top: 16px;
+      background: var(--hq-blue);
+      color: #003144;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.15s ease, transform 0.02s ease;
+    }
+    button:hover { filter: brightness(0.98); }
+    button:active { transform: translateY(1px); }
+    .stack { display: grid; gap: 12px; }
+    .results {
+      margin-top: 24px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .results h2 { font-size: 20px; margin: 0 0 14px; }
+    .formation { margin: 12px 0 18px; font-size: 16px; }
+    .formation a {
+      color: #064e66;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(6,78,102,0.2);
+    }
+    .formation a:hover { border-bottom-color: rgba(6,78,102,0.5); }
+    select:focus, button:focus, a:focus {
+      outline: 3px solid rgba(121,198,230,0.65);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="container">
+      <div class="muted">Ce module nécessite JavaScript pour fonctionner. Activez JavaScript dans votre navigateur.</div>
+    </div>
+  </noscript>
+
+  <div class="container" role="application" aria-label="Recherche de formations Hockey Québec">
+    <section class="card" aria-labelledby="label-role">
+      <div class="stack">
+        <label id="label-role" for="role">Sélectionnez votre rôle :</label>
+        <select id="role" name="role">
+          <option value="">— Sélectionnez —</option>
+          <option value="g1">Entraîneur·se groupe 1</option>
+          <option value="g2">Entraîneur·se groupe 2</option>
+          <option value="g3">Entraîneur·se groupe 3</option>
+          <option value="resp">Responsable d’équipe</option>
+          <option value="intervenant">Autre intervenant·e sur glace</option>
+          <option value="accompagnateur">Accompagnateur·trice d’un·e joueur·se du groupe 1 (débutant)</option>
+          <option value="officiel">Officiel·le</option>
+          <option value="pssh">Un·e entraîneur·se ou un·e des intervenant·e·s sur glace</option>
+        </select>
+        <button id="btnSearch" type="button">Rechercher</button>
+      </div>
+
+      <div class="results" id="resultats" aria-live="polite" aria-atomic="true"></div>
+    </section>
+  </div>
+
+  <script>
+    const blocVCJ = `
+      <div class="formation">
+        Vérification d’antécédents/de casier judiciaire (VCJ)
+      </div>
+    `;
+    const blocRespect = `
+      <div class="formation">
+        <a href="https://www.hockey.qc.ca/fr/page/sante_securite/respect_et_sport.html" target="_blank" rel="noopener noreferrer">
+          Respect sport pour leaders d’activité
+        </a>
+      </div>
+    `;
+    const blocEnt1 = `
+      <div class="formation">
+        <a href="https://page.spordle.com/fr/hq/clinics/1f05d928-d796-6f48-91ec-06ec3eeea2d1" target="_blank" rel="noopener noreferrer">
+          Entraîneur 1
+        </a>
+      </div>
+    `;
+    const blocEnt2 = `
+      <div class="formation">
+        <a href="https://page.spordle.com/fr/hq/clinics/1f05d98c-9e55-6978-b080-02347ea6fef5" target="_blank" rel="noopener noreferrer">
+          Entraîneur 2
+        </a>
+      </div>
+    `;
+    const blocOfficiel = `
+      <div class="formation">
+        <strong>Certification des officiel·le·s</strong><br>
+        L’arbitre doit avoir une connaissance de base de la population du hockey adapté et soit en mesure d’appliquer les adaptations requises.<br><br>
+        <em>Inscriptions :</em> En raison du nombre élevé d'inscriptions de nouveaux·elles officiel·le·s, vous devez communiquer avec le responsable régional et/ou local avant de vous inscrire à la formation HU en ligne de Hockey Canada.<br><br>
+        Voici le lien vers les responsables régionaux :
+        <a href="https://www.hockey.qc.ca/fr/page/officiel/structure_regionale.html" target="_blank" rel="noopener noreferrer">Responsables régionaux</a>
+      </div>
+    `;
+    const blocPSSH = `
+      <div class="formation">
+        <a href="https://page.spordle.com/fr/hq/clinics/1f052069-f3fa-611c-aa62-02347ea6fef5" target="_blank" rel="noopener noreferrer">Formation de santé et sécurité au hockey</a><br>
+        Cette formation est à renouveler tous les 3 ans.<br>
+        Il doit y avoir en tout temps, sur la glace, au moins un·e intervenant·e ayant suivi cette formation.
+      </div>
+    `;
+    const mapping = {
+      g1: [blocVCJ, blocRespect, blocEnt1],
+      g2: [blocVCJ, blocRespect, blocEnt2],
+      g3: [blocVCJ, blocRespect, blocEnt2],
+      resp: [blocVCJ, blocRespect],
+      intervenant: [blocVCJ, blocRespect],
+      accompagnateur: [blocVCJ],
+      officiel: [blocVCJ, blocOfficiel],
+      pssh: [blocPSSH]
+    };
+    function render(role) {
+      const zone = document.getElementById('resultats');
+      if (!role || !mapping[role]) {
+        zone.innerHTML = "";
+        return;
+      }
+      const blocs = mapping[role].join('');
+      const titre = document.querySelector('#role option:checked').textContent || 'Résultats';
+      zone.innerHTML = `<h2>Formations requises — ${titre}</h2>${blocs}`;
+      zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.getElementById('btnSearch').addEventListener('click', () => {
+      const role = document.getElementById('role').value;
+      render(role);
+    });
+    (function initFromQuery(){
+      const params = new URLSearchParams(location.search);
+      const pre = params.get('role');
+      if (pre && mapping[pre]) {
+        document.getElementById('role').value = pre;
+        render(pre);
+      }
+    })();
+  </script>
+</body>
+</html>
